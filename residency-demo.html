@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Residency — Building Management Portal</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg:        #F5F4F1;
+    --surface:   #FFFFFF;
+    --border:    #E8E5DF;
+    --navy:      #1B2A3B;
+    --teal:      #3D7E8A;
+    --teal-lt:   #EAF3F5;
+    --amber:     #C97D1A;
+    --amber-lt:  #FDF3E3;
+    --green:     #3A7A57;
+    --green-lt:  #E8F4EE;
+    --red:       #B83535;
+    --red-lt:    #FDEAEA;
+    --text:      #1B2A3B;
+    --muted:     #6E7E90;
+    --font-head: 'Cormorant Garamond', Georgia, serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius:    12px;
+    --shadow:    0 1px 12px rgba(27,42,59,0.06);
+    --shadow-lg: 0 6px 36px rgba(27,42,59,0.11);
+    --sidebar-w: 236px;
+    --header-h:  60px;
+    --ease:      cubic-bezier(0.4,0,0.2,1);
+    --t:         all 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: var(--font-body); font-size: 14px; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; font-family: var(--font-body); border: none; background: none; }
+  ul { list-style: none; }
+  input, textarea, select { font-family: var(--font-body); font-size: 14px; }
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  /* ── LOGIN ── */
+  #login-screen {
+    position: fixed; inset: 0; background: var(--navy);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 9999; transition: opacity 0.45s var(--ease);
+  }
+  #login-screen.hidden { opacity: 0; pointer-events: none; }
+  .login-card {
+    background: var(--surface); border-radius: 18px;
+    padding: 46px 42px; width: 380px;
+    box-shadow: var(--shadow-lg);
+    animation: rise 0.45s var(--ease);
+  }
+  @keyframes rise { from { opacity:0; transform: translateY(20px); } to { opacity:1; transform: none; } }
+  .login-wordmark { font-family: var(--font-head); font-size: 30px; font-weight: 500; color: var(--navy); letter-spacing: -0.3px; }
+  .login-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 34px; margin-top: 2px; }
+  .fl { display: block; font-size: 10.5px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+  .fi {
+    width: 100%; padding: 10px 13px; border: 1.5px solid var(--border);
+    border-radius: 8px; font-size: 13.5px; color: var(--text);
+    transition: var(--t); margin-bottom: 14px; background: var(--bg);
+    appearance: none;
+  }
+  .fi:focus { outline: none; border-color: var(--teal); background: #fff; }
+  .fi-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%236E7E90' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 13px center; background-color: var(--bg);
+    padding-right: 32px;
+  }
+  .btn-login {
+    width: 100%; padding: 12px; background: var(--navy);
+    color: #fff; border-radius: 8px; font-size: 13.5px; font-weight: 600;
+    letter-spacing: 0.2px; transition: var(--t); margin-top: 4px;
+  }
+  .btn-login:hover { background: var(--teal); transform: translateY(-1px); box-shadow: 0 4px 14px rgba(61,126,138,0.28); }
+
+  /* ── LAYOUT ── */
+  #app { display: flex; height: 100vh; overflow: hidden; }
+
+  /* ── SIDEBAR ── */
+  #sidebar {
+    width: var(--sidebar-w); background: var(--surface);
+    border-right: 1px solid var(--border); display: flex; flex-direction: column;
+    overflow-y: auto; flex-shrink: 0;
+  }
+  .sb-brand { padding: 22px 18px 18px; border-bottom: 1px solid var(--border); }
+  .sb-wordmark { font-family: var(--font-head); font-size: 23px; font-weight: 500; color: var(--navy); }
+  .sb-pill {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--teal-lt); color: var(--teal);
+    border-radius: 99px; padding: 3px 10px 3px 8px;
+    font-size: 10.5px; font-weight: 600; margin-top: 8px;
+    cursor: pointer; transition: var(--t);
+  }
+  .sb-pill:hover { background: var(--teal); color: #fff; }
+  .sb-section { padding: 18px 10px 6px; }
+  .sb-label { font-size: 9.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--muted); padding: 0 8px; margin-bottom: 4px; }
+  .nav-item {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 9px; border-radius: 7px;
+    font-size: 13px; font-weight: 500; color: var(--muted);
+    cursor: pointer; transition: var(--t); margin-bottom: 1px;
+  }
+  .nav-item:hover { background: var(--bg); color: var(--text); }
+  .nav-item.active { background: var(--navy); color: #fff; }
+  .nav-icon { width: 17px; height: 17px; flex-shrink: 0; }
+  .nav-badge {
+    margin-left: auto; background: var(--red); color: #fff;
+    border-radius: 99px; font-size: 9.5px; font-weight: 700;
+    padding: 1px 6px; min-width: 17px; text-align: center;
+  }
+  .nav-item.active .nav-badge { background: rgba(255,255,255,0.22); }
+  .sb-footer { margin-top: auto; padding: 14px 10px; border-top: 1px solid var(--border); }
+  .tenant-chip { display: flex; align-items: center; gap: 9px; padding: 8px 9px; border-radius: 8px; cursor: pointer; transition: var(--t); }
+  .tenant-chip:hover { background: var(--bg); }
+  .t-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--teal), var(--navy)); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+  .t-name { font-size: 12.5px; font-weight: 600; }
+  .t-unit { font-size: 11px; color: var(--muted); }
+
+  /* ── MAIN ── */
+  #main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
+  .topbar {
+    height: var(--header-h); background: var(--surface); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 26px; gap: 14px;
+    flex-shrink: 0; position: sticky; top: 0; z-index: 10;
+  }
+  .topbar-title { font-family: var(--font-head); font-size: 21px; font-weight: 500; flex: 1; }
+  .topbar-actions { display: flex; align-items: center; gap: 8px; }
+  .icon-btn {
+    width: 34px; height: 34px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg); color: var(--muted); transition: var(--t); position: relative;
+  }
+  .icon-btn:hover { background: var(--border); color: var(--text); }
+  .icon-btn .dot { position: absolute; top: 5px; right: 5px; width: 6px; height: 6px; border-radius: 50%; background: var(--red); border: 2px solid var(--surface); }
+  .content { flex: 1; padding: 26px; }
+  .panel { display: none; animation: fadeUp 0.25s var(--ease); }
+  .panel.active { display: block; }
+  @keyframes fadeUp { from { opacity:0; transform: translateY(5px); } to { opacity:1; transform: none; } }
+
+  /* ── CARDS ── */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-label { font-size: 10px; font-weight: 700; letter-spacing: 0.9px; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+
+  /* ── GRID ── */
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 22px; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 22px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 22px; }
+
+  /* ── STAT CARDS ── */
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; box-shadow: var(--shadow); }
+  .stat-label { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; }
+  .stat-val { font-family: var(--font-head); font-size: 30px; font-weight: 400; color: var(--navy); }
+  .stat-note { font-size: 11.5px; color: var(--green); font-weight: 500; margin-top: 3px; }
+  .stat-note.warn { color: var(--amber); }
+  .stat-note.alert { color: var(--red); }
+  .s-icon { float: right; margin-top: -2px; width: 34px; height: 34px; border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+  .s-icon.teal { background: var(--teal-lt); color: var(--teal); }
+  .s-icon.amber { background: var(--amber-lt); color: var(--amber); }
+  .s-icon.green { background: var(--green-lt); color: var(--green); }
+  .s-icon.red { background: var(--red-lt); color: var(--red); }
+
+  /* ── SECTION HEADER ── */
+  .sh { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .sh h2 { font-family: var(--font-head); font-size: 19px; font-weight: 500; }
+  .btn-ghost { font-size: 12.5px; font-weight: 500; color: var(--teal); padding: 5px 11px; border-radius: 6px; transition: var(--t); }
+  .btn-ghost:hover { background: var(--teal-lt); }
+  .btn-solid { font-size: 12.5px; font-weight: 600; padding: 8px 16px; background: var(--navy); color: #fff; border-radius: 7px; transition: var(--t); }
+  .btn-solid:hover { background: var(--teal); transform: translateY(-1px); }
+  .btn-outline { font-size: 12.5px; font-weight: 500; padding: 7px 14px; border: 1.5px solid var(--border); border-radius: 7px; color: var(--text); transition: var(--t); }
+  .btn-outline:hover { border-color: var(--teal); color: var(--teal); background: var(--teal-lt); }
+  .btn-teal { background: var(--teal); color: #fff; border-radius: 7px; font-size: 12.5px; font-weight: 600; padding: 8px 16px; transition: var(--t); }
+  .btn-teal:hover { background: var(--navy); }
+
+  /* ── ANNOUNCEMENT BANNER ── */
+  .announce-banner {
+    background: linear-gradient(135deg, var(--navy) 0%, #243D52 100%);
+    border-radius: var(--radius); padding: 20px 22px; color: #fff; margin-bottom: 22px;
+    position: relative; overflow: hidden;
+  }
+  .announce-banner::after { content:''; position:absolute; top:-50px; right:-50px; width:150px; height:150px; border-radius:50%; background:rgba(255,255,255,0.03); }
+  .announce-tag { font-size: 9.5px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; background: rgba(255,255,255,0.13); padding: 3px 9px; border-radius: 99px; display: inline-block; margin-bottom: 9px; }
+  .announce-banner h3 { font-family: var(--font-head); font-size: 19px; font-weight: 400; margin-bottom: 5px; }
+  .announce-banner p { font-size: 12.5px; opacity: 0.65; line-height: 1.65; }
+  .announce-date { font-size: 10.5px; opacity: 0.45; margin-top: 10px; }
+
+  /* ── TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  thead th { font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--muted); padding: 9px 13px; text-align: left; border-bottom: 1px solid var(--border); }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  tbody tr:hover { background: var(--bg); }
+  tbody tr:last-child { border: none; }
+  td { padding: 12px 13px; font-size: 13px; }
+  td.mono { font-family: 'Courier New', monospace; font-size: 11px; color: var(--muted); }
+
+  /* ── BADGE ── */
+  .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 9px; border-radius: 99px; font-size: 10.5px; font-weight: 600; }
+  .badge::before { content:''; width:5px; height:5px; border-radius:50%; background:currentColor; flex-shrink:0; }
+  .badge.open     { background: var(--amber-lt); color: var(--amber); }
+  .badge.progress { background: var(--teal-lt);  color: var(--teal);  }
+  .badge.closed   { background: var(--green-lt); color: var(--green); }
+  .badge.urgent   { background: var(--red-lt);   color: var(--red);   }
+  .badge.paid     { background: var(--green-lt); color: var(--green); }
+  .badge.due      { background: var(--amber-lt); color: var(--amber); }
+  .badge.overdue  { background: var(--red-lt);   color: var(--red);   }
+  .badge.confirmed{ background: var(--green-lt); color: var(--green); }
+  .badge.pending  { background: var(--amber-lt); color: var(--amber); }
+  .badge.info     { background: var(--teal-lt);  color: var(--teal);  }
+
+  /* ── QUICK ACTIONS ── */
+  .quick-actions { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; margin-bottom: 22px; }
+  .qa-btn {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 14px 10px;
+    display: flex; flex-direction: column; align-items: center; gap: 7px;
+    cursor: pointer; transition: var(--t); text-align: center;
+  }
+  .qa-btn:hover { border-color: var(--teal); background: var(--teal-lt); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .qa-btn:hover .qa-icon { background: var(--teal); color: #fff; }
+  .qa-icon { width: 38px; height: 38px; border-radius: 9px; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--teal); transition: var(--t); }
+  .qa-label { font-size: 11.5px; font-weight: 600; color: var(--text); }
+  .qa-sub { font-size: 10.5px; color: var(--muted); }
+
+  /* ── FEED ── */
+  .feed-item { display: flex; gap: 11px; padding: 11px 0; border-bottom: 1px solid var(--border); }
+  .feed-item:last-child { border: none; }
+  .feed-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+  .feed-dot.teal  { background: var(--teal); }
+  .feed-dot.amber { background: var(--amber); }
+  .feed-dot.green { background: var(--green); }
+  .feed-dot.red   { background: var(--red); }
+  .feed-title { font-size: 13px; font-weight: 500; }
+  .feed-meta  { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+
+  /* ── AMENITY CARDS ── */
+  .amenity-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(240px,1fr)); gap: 14px; margin-bottom: 26px; }
+  .amenity-card {
+    background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--radius); padding: 18px;
+    cursor: pointer; transition: var(--t); box-shadow: var(--shadow);
+  }
+  .amenity-card:hover { border-color: var(--teal); transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+  .amenity-card.selected { border-color: var(--teal); background: var(--teal-lt); }
+  .am-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 10px; }
+  .am-icon { width: 40px; height: 40px; border-radius: 9px; display: flex; align-items: center; justify-content: center; }
+  .am-avail { font-size: 10.5px; font-weight: 600; color: var(--green); background: var(--green-lt); padding: 2px 8px; border-radius: 99px; }
+  .am-avail.busy { color: var(--amber); background: var(--amber-lt); }
+  .am-name { font-size: 14.5px; font-weight: 600; margin-bottom: 3px; }
+  .am-desc { font-size: 12px; color: var(--muted); line-height: 1.55; }
+  .am-footer { display: flex; align-items: center; justify-content: space-between; margin-top: 13px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .am-cap { font-size: 11.5px; color: var(--muted); }
+
+  /* ── TIME SLOTS ── */
+  .time-slots { display: grid; grid-template-columns: repeat(4,1fr); gap: 7px; }
+  .slot {
+    padding: 7px 4px; border: 1.5px solid var(--border); border-radius: 7px;
+    font-size: 11.5px; font-weight: 500; text-align: center;
+    cursor: pointer; transition: var(--t); color: var(--text);
+  }
+  .slot:hover:not(.taken) { border-color: var(--teal); background: var(--teal-lt); color: var(--teal); }
+  .slot.taken { background: var(--bg); color: var(--border); cursor: default; border-color: var(--border); font-style: italic; }
+  .slot.selected { background: var(--teal); border-color: var(--teal); color: #fff; }
+
+  /* ── FORMS ── */
+  .form-row { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 10px; font-weight: 700; letter-spacing: 0.7px; text-transform: uppercase; color: var(--muted); margin-bottom: 5px; }
+  .form-input, .form-select, .form-textarea {
+    width: 100%; padding: 9px 12px; border: 1.5px solid var(--border);
+    border-radius: 7px; font-size: 13.5px; color: var(--text);
+    transition: var(--t); background: var(--bg);
+  }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { outline: none; border-color: var(--teal); background: #fff; }
+  .form-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7' fill='none'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%236E7E90' stroke-width='1.4' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 11px center; background-color: var(--bg); padding-right: 30px; }
+  .form-textarea { resize: vertical; min-height: 90px; line-height: 1.55; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  input[type="date"] { padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 7px; background: var(--bg); color: var(--text); font-size: 13.5px; font-family: var(--font-body); width: 100%; transition: var(--t); }
+  input[type="date"]:focus { outline: none; border-color: var(--teal); background: #fff; }
+
+  /* ── PAYMENT HERO ── */
+  .pay-hero {
+    background: linear-gradient(135deg, #1B2A3B 0%, #2C4558 100%);
+    border-radius: 14px; padding: 26px; color: #fff; margin-bottom: 22px;
+    position: relative; overflow: hidden;
+  }
+  .pay-hero::before { content:''; position:absolute; top:-55px; right:-55px; width:200px; height:200px; border-radius:50%; background:rgba(255,255,255,0.03); }
+  .pay-hero-lbl { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; opacity: 0.5; margin-bottom: 7px; }
+  .pay-hero-amt { font-family: var(--font-head); font-size: 44px; font-weight: 300; margin-bottom: 5px; }
+  .pay-hero-due { font-size: 12.5px; opacity: 0.55; }
+  .pay-hero-actions { display: flex; gap: 10px; margin-top: 22px; }
+  .btn-white { background: #fff; color: var(--navy); border-radius: 7px; font-size: 12.5px; font-weight: 700; padding: 9px 20px; transition: var(--t); }
+  .btn-white:hover { background: var(--teal-lt); color: var(--teal); }
+  .btn-white-ol { border: 1.5px solid rgba(255,255,255,0.28); color: #fff; border-radius: 7px; font-size: 12.5px; font-weight: 600; padding: 9px 18px; transition: var(--t); }
+  .btn-white-ol:hover { background: rgba(255,255,255,0.1); }
+
+  /* ── PROGRESS ── */
+  .prog-bar { background: var(--border); border-radius: 99px; height: 5px; overflow: hidden; }
+  .prog-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--teal), var(--navy)); transition: width 0.9s var(--ease); }
+
+  /* ── PACKAGE ALERT ── */
+  .pkg-card {
+    display: flex; gap: 14px; align-items: flex-start; padding: 14px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-left: 3px solid var(--amber);
+    border-radius: 10px; margin-bottom: 10px; box-shadow: var(--shadow);
+  }
+  .pkg-icon-wrap { width: 36px; height: 36px; border-radius: 8px; background: var(--amber-lt); display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--amber); }
+  .pkg-title { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .pkg-meta  { font-size: 12px; color: var(--muted); }
+
+  /* ── INTEGRATION STRIP ── */
+  .int-strip { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
+  .int-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; background: var(--green-lt); color: var(--green); padding: 3px 9px; border-radius: 99px; }
+  .int-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .sys-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 9px; padding: 12px 16px; margin-bottom: 18px;
+  }
+  .sys-left { display: flex; align-items: center; gap: 10px; }
+  .sys-tag { color: #fff; font-size: 10px; font-weight: 800; padding: 3px 7px; border-radius: 4px; letter-spacing: 0.4px; }
+  .sys-tag.yardi  { background: #0055A0; }
+  .sys-tag.attntv { background: #C04B10; }
+  .sys-name { font-size: 13px; font-weight: 600; }
+  .sys-sub  { font-size: 11.5px; color: var(--muted); }
+  .connected-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 600; color: var(--green); background: var(--green-lt); padding: 2px 8px; border-radius: 99px; }
+  .connected-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  /* ── WEEK CALENDAR ── */
+  .week-cal { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 18px; }
+  .wk-head { display: grid; grid-template-columns: 54px repeat(7,1fr); border-bottom: 1px solid var(--border); }
+  .wk-hcell { padding: 9px 4px; text-align: center; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--muted); }
+  .wk-hcell.today { color: var(--teal); }
+  .wk-hdate { font-family: var(--font-head); font-size: 19px; font-weight: 400; display: block; color: var(--text); }
+  .wk-hcell.today .wk-hdate { background: var(--teal); color: #fff; border-radius: 50%; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; }
+  .wk-row { display: grid; grid-template-columns: 54px repeat(7,1fr); border-bottom: 1px solid var(--border); }
+  .wk-row:last-child { border: none; }
+  .wk-time { padding: 8px 4px; font-size: 9.5px; color: var(--muted); text-align: right; font-weight: 500; padding-top: 10px; }
+  .wk-cell { border-left: 1px solid var(--border); padding: 2px; min-height: 40px; }
+  .ev-block { background: var(--teal-lt); border-left: 2px solid var(--teal); border-radius: 3px; padding: 2px 5px; font-size: 9.5px; font-weight: 600; color: var(--teal); margin-bottom: 2px; cursor: pointer; transition: var(--t); }
+  .ev-block:hover { background: var(--teal); color: #fff; }
+  .ev-block.amber { background: var(--amber-lt); border-color: var(--amber); color: var(--amber); }
+  .ev-block.amber:hover { background: var(--amber); color: #fff; }
+
+  /* ── MODAL ── */
+  .modal-bd { position: fixed; inset: 0; background: rgba(27,42,59,0.45); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.18s; }
+  .modal-bd.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border-radius: 14px; width: 100%; max-width: 470px; box-shadow: var(--shadow-lg); max-height: 88vh; overflow-y: auto; transform: translateY(10px); transition: transform 0.22s var(--ease); }
+  .modal-bd.open .modal { transform: none; }
+  .modal-hdr { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); }
+  .modal-title { font-family: var(--font-head); font-size: 19px; font-weight: 500; }
+  .modal-close { width: 30px; height: 30px; border-radius: 7px; background: var(--bg); display: flex; align-items: center; justify-content: center; color: var(--muted); cursor: pointer; transition: var(--t); font-size: 13px; }
+  .modal-close:hover { background: var(--border); color: var(--text); }
+  .modal-body { padding: 22px; }
+  .modal-ftr { padding: 14px 22px; border-top: 1px solid var(--border); display: flex; gap: 9px; justify-content: flex-end; }
+
+  /* ── BUILDING SWITCHER ── */
+  .bld-list { display: flex; flex-direction: column; gap: 8px; }
+  .bld-opt { display: flex; align-items: center; gap: 11px; padding: 11px 14px; border: 1.5px solid var(--border); border-radius: 9px; cursor: pointer; transition: var(--t); }
+  .bld-opt:hover { border-color: var(--teal); background: var(--teal-lt); }
+  .bld-opt.active { border-color: var(--teal); background: var(--teal-lt); }
+  .bld-thumb { width: 38px; height: 38px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .bld-info strong { font-size: 13px; font-weight: 600; display: block; }
+  .bld-info span   { font-size: 11.5px; color: var(--muted); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%) translateY(70px);
+    background: var(--navy); color: #fff; padding: 10px 22px;
+    border-radius: 99px; font-size: 13px; font-weight: 500;
+    box-shadow: var(--shadow-lg); z-index: 9998; transition: transform 0.28s var(--ease); white-space: nowrap;
+  }
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── TICKET DETAIL FEED ── */
+  .tl-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .tl-item:last-child { border: none; }
+  .tl-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+
+  /* ── ANNOUNCE LIST ── */
+  .ann-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; box-shadow: var(--shadow); }
+  .ann-card:hover { box-shadow: var(--shadow-lg); }
+  .ann-hdr { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 7px; }
+  .ann-title { font-size: 15px; font-weight: 600; margin-top: 5px; }
+  .ann-body  { font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .ann-foot  { font-size: 11px; color: var(--muted); margin-top: 8px; }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 860px) {
+    .grid-4 { grid-template-columns: repeat(2,1fr); }
+    .quick-actions { grid-template-columns: repeat(2,1fr); }
+    #sidebar { width: 58px; }
+    .sb-wordmark, .sb-label, .nav-item span, .t-name, .t-unit, .sb-pill { display: none; }
+    .sb-footer { padding: 10px 5px; }
+    .nav-item { justify-content: center; padding: 9px; }
+    .tenant-chip { justify-content: center; }
+  }
+  @media (max-width: 600px) {
+    .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    .form-grid { grid-template-columns: 1fr; }
+    .content { padding: 14px; }
+    .topbar { padding: 0 14px; }
+  }
+
+  /* ── SVG ICON HELPER ── */
+  .icon { display:inline-block; vertical-align: middle; }
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-wordmark">Residency</div>
+    <div class="login-sub">Building Management Portal</div>
+
+    <label class="fl">Select Your Building</label>
+    <select class="fi fi-select" id="login-building">
+      <option>Ashford Heights — 200 W 57th St</option>
+      <option>Riverview Lofts — 840 River Dr</option>
+      <option>Elmpark Suites — 1120 Elm Ave</option>
+      <option>Northgate Plaza — 3300 N Main</option>
+    </select>
+
+    <label class="fl">Unit Number</label>
+    <input class="fi" type="text" placeholder="e.g. 4B" value="4B"/>
+
+    <label class="fl">Email Address</label>
+    <input class="fi" type="email" placeholder="you@email.com" value="j.morgan@email.com"/>
+
+    <label class="fl">Password</label>
+    <input class="fi" type="password" value="demo1234"/>
+
+    <button class="btn-login" onclick="doLogin()">Sign In to My Building</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- APP -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <nav id="sidebar">
+    <div class="sb-brand">
+      <div class="sb-wordmark">Residency</div>
+      <div class="sb-pill" onclick="openModal('bld-modal')">
+        <svg width="9" height="9" viewBox="0 0 20 20" fill="none"><path d="M4 9V5a1 1 0 011-1h10a1 1 0 011 1v4" stroke="currentColor" stroke-width="1.8"/><rect x="2" y="9" width="16" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        Ashford Heights
+      </div>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Main</div>
+      <ul>
+        <li class="nav-item active" onclick="nav('dashboard',this)">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><rect x="2" y="2" width="7" height="7" rx="1.5" fill="currentColor" opacity=".8"/><rect x="11" y="2" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="2" y="11" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="11" y="11" width="7" height="7" rx="1.5" fill="currentColor" opacity=".8"/></svg>
+          <span>Dashboard</span>
+        </li>
+        <li class="nav-item" onclick="nav('booking',this)">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M7 2v4M13 2v4M3 9h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          <span>Book Amenities</span>
+        </li>
+        <li class="nav-item" onclick="nav('packages',this)">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M3 7l7-4 7 4v9l-7 4-7-4V7z" stroke="currentColor" stroke-width="1.5"/><path d="M10 3v14M3 7l7 4 7-4" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span>Mail &amp; Packages</span>
+          <span class="nav-badge">2</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sb-section">
+      <div class="sb-label">Services</div>
+      <ul>
+        <li class="nav-item" onclick="nav('tickets',this)">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M4 13V5a1 1 0 011-1h10a1 1 0 011 1v8M2 13h16v1a2 2 0 01-2 2H4a2 2 0 01-2-2v-1z" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h4M8 10.5h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <span>Trouble Tickets</span>
+          <span class="nav-badge">1</span>
+        </li>
+        <li class="nav-item" onclick="nav('payments',this)">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M2 9h16" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="13" r="1" fill="currentColor"/></svg>
+          <span>Rent &amp; Payments</span>
+        </li>
+        <li class="nav-item" onclick="nav('announcements',this)">
+          <svg class="nav-icon" viewBox="0 0 20 20" fill="none"><path d="M4 13v3l3-2h9V6H4v4" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M4 10H2V7l2-.5" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span>Announcements</span>
+        </li>
+      </ul>
+    </div>
+
+    <div class="sb-footer">
+      <div class="tenant-chip">
+        <div class="t-avatar">JM</div>
+        <div>
+          <div class="t-name">Jordan Morgan</div>
+          <div class="t-unit">Unit 4B · Ashford Heights</div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div id="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-actions">
+        <button class="icon-btn" onclick="toast('No new notifications')">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M10 2a6 6 0 00-6 6v3l-1.5 2.5h15L16 11V8a6 6 0 00-6-6z" stroke="currentColor" stroke-width="1.5"/><path d="M8 16a2 2 0 004 0" stroke="currentColor" stroke-width="1.5"/></svg>
+          <span class="dot"></span>
+        </button>
+        <button class="icon-btn" onclick="toast('Help center — contact support@residency.app')">
+          <svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M8 8c0-1.1.9-2 2-2s2 .9 2 2c0 .8-.5 1.5-1.2 1.8L10 10.5V12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="10" cy="14.5" r=".7" fill="currentColor"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="announce-banner">
+          <div class="announce-tag">Building Notice</div>
+          <h3>Pool Maintenance — March 20–22</h3>
+          <p>The rooftop pool will be closed for its seasonal inspection. Affected bookings have been automatically rescheduled and tenants notified.</p>
+          <div class="announce-date">Posted March 15, 2026 · Ashford Heights Management</div>
+        </div>
+
+        <div class="grid-4">
+          <div class="stat-card">
+            <div class="s-icon teal" style="float:right"><svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M2 9h16" stroke="currentColor" stroke-width="1.5"/></svg></div>
+            <div class="stat-label">Rent Due</div>
+            <div class="stat-val">$2,450</div>
+            <div class="stat-note alert">Due April 1</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-icon amber" style="float:right"><svg width="15" height="15" viewBox="0 0 20 20" fill="none"><path d="M3 7l7-4 7 4v9l-7 4-7-4V7z" stroke="currentColor" stroke-width="1.5"/></svg></div>
+            <div class="stat-label">Packages</div>
+            <div class="stat-val">2</div>
+            <div class="stat-note warn">Awaiting pickup</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-icon red" style="float:right"><svg width="15" height="15" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.5"/><path d="M10 6v4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="13.5" r=".7" fill="currentColor"/></svg></div>
+            <div class="stat-label">Open Tickets</div>
+            <div class="stat-val">1</div>
+            <div class="stat-note">In progress</div>
+          </div>
+          <div class="stat-card">
+            <div class="s-icon green" style="float:right"><svg width="15" height="15" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M7 2v4M13 2v4M3 9h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div class="stat-label">Next Booking</div>
+            <div class="stat-val" style="font-size:20px;line-height:1.3">Mar 19</div>
+            <div class="stat-note">Fitness Room 8 AM</div>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button class="qa-btn" onclick="nav('payments',null);setTimeout(()=>openModal('pay-modal'),280)">
+            <div class="qa-icon"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="2" y="5" width="16" height="11" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M2 9h16" stroke="currentColor" stroke-width="1.5"/><circle cx="6" cy="13" r="1" fill="currentColor"/></svg></div>
+            <div class="qa-label">Pay Rent</div>
+            <div class="qa-sub">via Yardi</div>
+          </button>
+          <button class="qa-btn" onclick="nav('tickets',null);setTimeout(()=>openModal('ticket-modal'),280)">
+            <div class="qa-icon"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M4 13V5a1 1 0 011-1h10a1 1 0 011 1v8M2 13h16v1a2 2 0 01-2 2H4a2 2 0 01-2-2v-1z" stroke="currentColor" stroke-width="1.5"/><path d="M8 8h4M8 10.5h2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg></div>
+            <div class="qa-label">New Ticket</div>
+            <div class="qa-sub">via ATTNTV</div>
+          </button>
+          <button class="qa-btn" onclick="nav('booking',null)">
+            <div class="qa-icon"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><rect x="3" y="4" width="14" height="13" rx="1.8" stroke="currentColor" stroke-width="1.5"/><path d="M7 2v4M13 2v4M3 9h14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></div>
+            <div class="qa-label">Book Amenity</div>
+            <div class="qa-sub">Reserve a space</div>
+          </button>
+          <button class="qa-btn" onclick="nav('packages',null)">
+            <div class="qa-icon"><svg width="18" height="18" viewBox="0 0 20 20" fill="none"><path d="M3 7l7-4 7 4v9l-7 4-7-4V7z" stroke="currentColor" stroke-width="1.5"/><path d="M10 3v14M3 7l7 4 7-4" stroke="currentColor" stroke-width="1.5"/></svg></div>
+            <div class="qa-label">My Packages</div>
+            <div class="qa-sub">2 waiting</div>
+          </button>
+        </div>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-label">Recent Activity</div>
+            <div class="feed-item"><div class="feed-dot green"></div><div><div class="feed-title">Rent payment confirmed — $2,450</div><div class="feed-meta">Mar 1, 2026 · via Yardi</div></div></div>
+            <div class="feed-item"><div class="feed-dot teal"></div><div><div class="feed-title">Fitness Room booked — Mar 19, 8–9 AM</div><div class="feed-meta">Mar 14, 2026 · Confirmed</div></div></div>
+            <div class="feed-item"><div class="feed-dot amber"></div><div><div class="feed-title">Package received — UPS · Lobby Slot B-4</div><div class="feed-meta">Mar 13, 2026</div></div></div>
+            <div class="feed-item"><div class="feed-dot red"></div><div><div class="feed-title">Ticket #ATT-4492 opened — Leaky faucet</div><div class="feed-meta">Mar 10, 2026 · In progress</div></div></div>
+            <div class="feed-item"><div class="feed-dot amber"></div><div><div class="feed-title">Package received — FedEx · Lobby Slot B-7</div><div class="feed-meta">Mar 9, 2026</div></div></div>
+          </div>
+
+          <div class="card">
+            <div class="card-label">Lease Summary</div>
+            <div style="margin-bottom:16px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:7px">
+                <span style="font-size:12.5px;color:var(--muted)">Lease progress</span>
+                <span style="font-size:12.5px;font-weight:600">8 of 12 months</span>
+              </div>
+              <div class="prog-bar"><div class="prog-fill" style="width:66%"></div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div><div style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:3px">Unit</div><div style="font-size:13px;font-weight:600">4B · 2BR / 1BA</div></div>
+              <div><div style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:3px">Floor</div><div style="font-size:13px;font-weight:600">4th Floor</div></div>
+              <div><div style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:3px">Lease Start</div><div style="font-size:13px;font-weight:600">Aug 1, 2025</div></div>
+              <div><div style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:3px">Lease End</div><div style="font-size:13px;font-weight:600">Jul 31, 2026</div></div>
+              <div><div style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:3px">Monthly Rent</div><div style="font-size:13px;font-weight:600">$2,450.00</div></div>
+              <div><div style="font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;font-weight:700;margin-bottom:3px">Parking</div><div style="font-size:13px;font-weight:600">Space A-14</div></div>
+            </div>
+            <div style="margin-top:16px;padding-top:12px;border-top:1px solid var(--border);display:flex;gap:8px">
+              <button class="btn-outline" style="font-size:11.5px;padding:5px 11px" onclick="toast('Downloading lease PDF...')">View Lease</button>
+              <button class="btn-outline" style="font-size:11.5px;padding:5px 11px" onclick="toast('Renewal info sent to your email')">Renew Lease</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BOOKING -->
+      <div class="panel" id="panel-booking">
+        <div class="int-strip">
+          <span style="font-size:12px;color:var(--muted)">Calendar:</span>
+          <span class="int-badge"><span class="int-dot"></span>Booking System · Live</span>
+        </div>
+        <div class="sh"><h2>Book an Amenity</h2><button class="btn-ghost" onclick="openModal('my-bookings-modal')">My Bookings</button></div>
+
+        <div class="amenity-grid">
+          <div class="amenity-card" onclick="selectAmenity(this,'fitness')">
+            <div class="am-hdr">
+              <div class="am-icon" style="background:var(--teal-lt);color:var(--teal)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M6 4v16M18 4v16M6 12h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M3 7v10M21 7v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+              </div>
+              <div class="am-avail">Available</div>
+            </div>
+            <div class="am-name">Fitness Room</div>
+            <div class="am-desc">Cardio, free weights, and resistance machines on Level 2.</div>
+            <div class="am-footer"><span class="am-cap">Capacity: 8</span><span style="font-size:12px;color:var(--teal);font-weight:600">Reserve →</span></div>
+          </div>
+          <div class="amenity-card" onclick="selectAmenity(this,'pool')">
+            <div class="am-hdr">
+              <div class="am-icon" style="background:var(--teal-lt);color:var(--teal)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="6" r="2" stroke="currentColor" stroke-width="1.5"/></svg>
+              </div>
+              <div class="am-avail busy">Maintenance Mar 20–22</div>
+            </div>
+            <div class="am-name">Rooftop Pool</div>
+            <div class="am-desc">Heated pool and jacuzzi on the 12th floor with skyline views.</div>
+            <div class="am-footer"><span class="am-cap">Capacity: 15</span><span style="font-size:12px;color:var(--teal);font-weight:600">Reserve →</span></div>
+          </div>
+          <div class="amenity-card" onclick="selectAmenity(this,'event')">
+            <div class="am-hdr">
+              <div class="am-icon" style="background:var(--amber-lt);color:var(--amber)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 5V3M16 5V3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <div class="am-avail">Available</div>
+            </div>
+            <div class="am-name">Event Lounge</div>
+            <div class="am-desc">Private space with kitchenette, AV system, and seating for 30.</div>
+            <div class="am-footer"><span class="am-cap">Capacity: 30</span><span style="font-size:12px;color:var(--teal);font-weight:600">Reserve →</span></div>
+          </div>
+          <div class="amenity-card" onclick="selectAmenity(this,'terrace')">
+            <div class="am-hdr">
+              <div class="am-icon" style="background:var(--green-lt);color:var(--green)">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3v6M6 12H3M21 12h-3M7.76 7.76L5.64 5.64M18.36 5.64l-2.12 2.12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><circle cx="12" cy="14" r="4" stroke="currentColor" stroke-width="1.5"/><path d="M3 19h18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+              </div>
+              <div class="am-avail">Available</div>
+            </div>
+            <div class="am-name">Rooftop Terrace</div>
+            <div class="am-desc">Outdoor lounge with BBQ grills and city views.</div>
+            <div class="am-footer"><span class="am-cap">Capacity: 20</span><span style="font-size:12px;color:var(--teal);font-weight:600">Reserve →</span></div>
+          </div>
+        </div>
+
+        <div id="booking-form" style="display:none">
+          <div class="card">
+            <div class="card-label" id="bf-title">Select Date &amp; Time Slot</div>
+            <div class="form-grid" style="margin-bottom:18px">
+              <div class="form-row"><label class="form-label">Date</label><input type="date" id="book-date" onchange="loadSlots()"/></div>
+              <div class="form-row"><label class="form-label">Duration</label><select class="form-select"><option>1 hour</option><option>2 hours</option><option>Half day (4h)</option><option>Full day</option></select></div>
+            </div>
+            <label class="form-label">Available Time Slots</label>
+            <div class="time-slots" id="time-slots">
+              <div class="slot taken">6 AM</div><div class="slot" onclick="pickSlot(this)">7 AM</div>
+              <div class="slot" onclick="pickSlot(this)">8 AM</div><div class="slot taken">9 AM</div>
+              <div class="slot" onclick="pickSlot(this)">10 AM</div><div class="slot" onclick="pickSlot(this)">11 AM</div>
+              <div class="slot taken">12 PM</div><div class="slot" onclick="pickSlot(this)">1 PM</div>
+              <div class="slot" onclick="pickSlot(this)">2 PM</div><div class="slot" onclick="pickSlot(this)">3 PM</div>
+              <div class="slot taken">4 PM</div><div class="slot" onclick="pickSlot(this)">5 PM</div>
+              <div class="slot" onclick="pickSlot(this)">6 PM</div><div class="slot" onclick="pickSlot(this)">7 PM</div>
+              <div class="slot taken">8 PM</div><div class="slot" onclick="pickSlot(this)">9 PM</div>
+            </div>
+            <div style="margin-top:18px;display:flex;gap:9px;align-items:center">
+              <button class="btn-solid" onclick="confirmBooking()">Confirm Reservation</button>
+              <button class="btn-outline" onclick="document.getElementById('booking-form').style.display='none'">Cancel</button>
+              <span id="book-sel" style="font-size:12.5px;color:var(--muted)"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="sh" style="margin-top:26px"><h2>This Week</h2>
+          <div style="display:flex;gap:7px">
+            <button class="btn-outline" style="font-size:11.5px;padding:4px 10px">← Prev</button>
+            <button class="btn-outline" style="font-size:11.5px;padding:4px 10px">Next →</button>
+          </div>
+        </div>
+        <div class="week-cal">
+          <div class="wk-head">
+            <div class="wk-hcell"></div>
+            <div class="wk-hcell">Mon<span class="wk-hdate">16</span></div>
+            <div class="wk-hcell today">Tue<span class="wk-hdate">17</span></div>
+            <div class="wk-hcell">Wed<span class="wk-hdate">18</span></div>
+            <div class="wk-hcell">Thu<span class="wk-hdate">19</span></div>
+            <div class="wk-hcell">Fri<span class="wk-hdate">20</span></div>
+            <div class="wk-hcell">Sat<span class="wk-hdate">21</span></div>
+            <div class="wk-hcell">Sun<span class="wk-hdate">22</span></div>
+          </div>
+          <div class="wk-row"><div class="wk-time">7 AM</div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block">Fitness · You</div></div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block">Fitness · You</div></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"></div></div>
+          <div class="wk-row"><div class="wk-time">10 AM</div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block amber">Event Lounge · 4F</div></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block amber">Terrace · 7A</div></div><div class="wk-cell"></div></div>
+          <div class="wk-row"><div class="wk-time">2 PM</div><div class="wk-cell"><div class="ev-block amber">Event Lounge · 2C</div></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block">Fitness · 9B</div></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block">Fitness · 3D</div></div></div>
+          <div class="wk-row"><div class="wk-time">6 PM</div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block amber">Terrace · 8A</div></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"></div><div class="wk-cell"><div class="ev-block">Fitness · 1A</div></div><div class="wk-cell"></div></div>
+        </div>
+      </div>
+
+      <!-- PACKAGES -->
+      <div class="panel" id="panel-packages">
+        <div class="sh" style="margin-bottom:18px"><h2>Mail &amp; Packages</h2><span class="badge pending">2 awaiting pickup</span></div>
+
+        <div class="pkg-card">
+          <div class="pkg-icon-wrap">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 7l7-4 7 4v9l-7 4-7-4V7z" stroke="currentColor" stroke-width="1.5"/><path d="M10 3v14M3 7l7 4 7-4" stroke="currentColor" stroke-width="1.5"/></svg>
+          </div>
+          <div style="flex:1">
+            <div class="pkg-title">UPS — Unit 4B</div>
+            <div class="pkg-meta">Arrived Mar 13 · Tracking 1Z849200348294002 · Lobby Mailroom Slot B-4</div>
+          </div>
+          <button class="btn-outline" style="font-size:11.5px;padding:5px 11px;flex-shrink:0" onclick="markPickup(this)">Mark Picked Up</button>
+        </div>
+        <div class="pkg-card">
+          <div class="pkg-icon-wrap">
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M3 7l7-4 7 4v9l-7 4-7-4V7z" stroke="currentColor" stroke-width="1.5"/><path d="M10 3v14M3 7l7 4 7-4" stroke="currentColor" stroke-width="1.5"/></svg>
+          </div>
+          <div style="flex:1">
+            <div class="pkg-title">FedEx — Unit 4B</div>
+            <div class="pkg-meta">Arrived Mar 9 · Tracking 7920114029485 · Lobby Mailroom Slot B-7</div>
+          </div>
+          <button class="btn-outline" style="font-size:11.5px;padding:5px 11px;flex-shrink:0" onclick="markPickup(this)">Mark Picked Up</button>
+        </div>
+
+        <div style="margin-top:26px">
+          <div class="sh"><h2>Package History</h2></div>
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Carrier</th><th>Tracking #</th><th>Arrived</th><th>Picked Up</th><th>Status</th></tr></thead>
+                <tbody>
+                  <tr><td>UPS</td><td class="mono">1Z849200348294002</td><td>Mar 13</td><td>—</td><td><span class="badge pending">Pending</span></td></tr>
+                  <tr><td>FedEx</td><td class="mono">7920114029485</td><td>Mar 9</td><td>—</td><td><span class="badge pending">Pending</span></td></tr>
+                  <tr><td>USPS</td><td class="mono">9400111899223714</td><td>Feb 28</td><td>Mar 1</td><td><span class="badge closed">Picked Up</span></td></tr>
+                  <tr><td>UPS</td><td class="mono">1Z849200340011823</td><td>Feb 20</td><td>Feb 21</td><td><span class="badge closed">Picked Up</span></td></tr>
+                  <tr><td>FedEx</td><td class="mono">7749992810028</td><td>Feb 11</td><td>Feb 11</td><td><span class="badge closed">Picked Up</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TICKETS -->
+      <div class="panel" id="panel-tickets">
+        <div class="sys-bar">
+          <div class="sys-left">
+            <span class="sys-tag attntv">ATTNTV</span>
+            <div><div class="sys-name">ATTNTV Integration</div><div class="sys-sub">Trouble ticket system · Tenant portal synced</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <span class="connected-tag"><span class="connected-dot"></span>Connected</span>
+            <button class="btn-outline" style="font-size:11.5px;padding:5px 11px" onclick="toast('Opening ATTNTV portal...')">Open Portal</button>
+          </div>
+        </div>
+
+        <div class="sh"><h2>My Tickets</h2><button class="btn-solid" onclick="openModal('ticket-modal')">+ New Ticket</button></div>
+
+        <div class="card" style="margin-bottom:22px">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Ticket #</th><th>Issue</th><th>Category</th><th>Submitted</th><th>Priority</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><strong>#ATT-4492</strong></td>
+                  <td>Leaky kitchen faucet</td>
+                  <td>Plumbing</td><td>Mar 10</td>
+                  <td><span class="badge open">Medium</span></td>
+                  <td><span class="badge progress">In Progress</span></td>
+                  <td><button class="btn-ghost" style="padding:3px 8px;font-size:11.5px" onclick="openModal('ticket-detail-modal')">View</button></td>
+                </tr>
+                <tr>
+                  <td><strong>#ATT-4301</strong></td>
+                  <td>Bedroom window — difficult to lock</td>
+                  <td>Windows / Doors</td><td>Feb 14</td>
+                  <td><span class="badge urgent">High</span></td>
+                  <td><span class="badge closed">Resolved</span></td>
+                  <td><button class="btn-ghost" style="padding:3px 8px;font-size:11.5px" onclick="toast('Ticket #ATT-4301 resolved Feb 17')">View</button></td>
+                </tr>
+                <tr>
+                  <td><strong>#ATT-4110</strong></td>
+                  <td>Hallway light out — floor 4</td>
+                  <td>Electrical</td><td>Jan 29</td>
+                  <td><span class="badge open">Low</span></td>
+                  <td><span class="badge closed">Resolved</span></td>
+                  <td><button class="btn-ghost" style="padding:3px 8px;font-size:11.5px" onclick="toast('Ticket #ATT-4110 resolved Feb 2')">View</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="stat-card"><div class="stat-label">Total Submitted</div><div class="stat-val">3</div></div>
+          <div class="stat-card"><div class="stat-label">Avg. Resolution</div><div class="stat-val">3.2 <span style="font-size:15px;font-weight:400">days</span></div></div>
+          <div class="stat-card"><div class="stat-label">Currently Open</div><div class="stat-val" style="color:var(--amber)">1</div></div>
+        </div>
+      </div>
+
+      <!-- PAYMENTS -->
+      <div class="panel" id="panel-payments">
+        <div class="sys-bar">
+          <div class="sys-left">
+            <span class="sys-tag yardi">YARDI</span>
+            <div><div class="sys-name">Yardi Voyager Integration</div><div class="sys-sub">Rent ledger synced · Updated March 17, 2026</div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:9px">
+            <span class="connected-tag"><span class="connected-dot"></span>Connected</span>
+            <button class="btn-outline" style="font-size:11.5px;padding:5px 11px" onclick="toast('Opening Yardi portal...')">Yardi Portal</button>
+          </div>
+        </div>
+
+        <div class="pay-hero">
+          <div class="pay-hero-lbl">Balance Due — April 2026</div>
+          <div class="pay-hero-amt">$2,450.00</div>
+          <div class="pay-hero-due">Due April 1, 2026 · Auto-pay: Off</div>
+          <div class="pay-hero-actions">
+            <button class="btn-white" onclick="openModal('pay-modal')">Pay Now</button>
+            <button class="btn-white-ol" onclick="toast('Auto-pay setup via Yardi — coming soon')">Set Up Auto-Pay</button>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:22px">
+          <div class="card">
+            <div class="card-label">Balance Breakdown</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;justify-content:space-between"><span style="font-size:13px">Base Rent</span><span style="font-weight:600">$2,350.00</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="font-size:13px">Parking (Space A-14)</span><span style="font-weight:600">$75.00</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="font-size:13px">Pet Fee</span><span style="font-weight:600">$25.00</span></div>
+              <div style="height:1px;background:var(--border)"></div>
+              <div style="display:flex;justify-content:space-between"><span style="font-size:13.5px;font-weight:700">Total Due</span><span style="font-size:15px;font-weight:700;color:var(--navy)">$2,450.00</span></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-label">Payment Methods</div>
+            <div style="display:flex;flex-direction:column;gap:9px">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px;background:var(--bg);border-radius:7px;border:1.5px solid var(--teal)">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <div style="width:32px;height:22px;background:var(--teal-lt);border-radius:4px;display:flex;align-items:center;justify-content:center">
+                    <svg width="14" height="10" viewBox="0 0 20 14" fill="none"><rect x="1" y="1" width="18" height="12" rx="2" stroke="var(--teal)" stroke-width="1.3"/><path d="M1 5h18" stroke="var(--teal)" stroke-width="1.3"/></svg>
+                  </div>
+                  <div><div style="font-size:12.5px;font-weight:600">Visa ···· 4891</div><div style="font-size:11px;color:var(--muted)">Expires 08/28</div></div>
+                </div>
+                <span class="badge confirmed">Default</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:9px;background:var(--bg);border-radius:7px;border:1.5px solid var(--border)">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <div style="width:32px;height:22px;background:var(--bg);border-radius:4px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center">
+                    <svg width="14" height="10" viewBox="0 0 20 14" fill="none"><path d="M2 3h16M2 5h16M3 8h4M3 10h3" stroke="var(--muted)" stroke-width="1.2" stroke-linecap="round"/><rect x="1" y="1" width="18" height="12" rx="2" stroke="var(--muted)" stroke-width="1.2"/></svg>
+                  </div>
+                  <div><div style="font-size:12.5px;font-weight:600">Chase ACH ···· 2210</div><div style="font-size:11px;color:var(--muted)">Bank Transfer</div></div>
+                </div>
+              </div>
+              <button class="btn-outline" style="font-size:11.5px;padding:6px" onclick="toast('Add payment method via Yardi portal')">+ Add Payment Method</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sh"><h2>Payment History</h2><button class="btn-ghost" onclick="toast('Downloading statements...')">Download Statements</button></div>
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Period</th><th>Amount</th><th>Method</th><th>Date Paid</th><th>Confirmation</th><th>Status</th></tr></thead>
+              <tbody>
+                <tr><td>Apr 2026</td><td><strong>$2,450.00</strong></td><td>—</td><td>—</td><td>—</td><td><span class="badge due">Due Apr 1</span></td></tr>
+                <tr><td>Mar 2026</td><td><strong>$2,450.00</strong></td><td>Visa ···· 4891</td><td>Mar 1, 2026</td><td class="mono">YRD-20260301-4B</td><td><span class="badge paid">Paid</span></td></tr>
+                <tr><td>Feb 2026</td><td><strong>$2,450.00</strong></td><td>Chase ACH ···· 2210</td><td>Feb 1, 2026</td><td class="mono">YRD-20260201-4B</td><td><span class="badge paid">Paid</span></td></tr>
+                <tr><td>Jan 2026</td><td><strong>$2,450.00</strong></td><td>Visa ···· 4891</td><td>Jan 1, 2026</td><td class="mono">YRD-20260101-4B</td><td><span class="badge paid">Paid</span></td></tr>
+                <tr><td>Dec 2025</td><td><strong>$2,450.00</strong></td><td>Visa ···· 4891</td><td>Dec 1, 2025</td><td class="mono">YRD-20251201-4B</td><td><span class="badge paid">Paid</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ANNOUNCEMENTS -->
+      <div class="panel" id="panel-announcements">
+        <div class="sh"><h2>Building Announcements</h2></div>
+
+        <div class="ann-card" style="border-left:3px solid var(--red)">
+          <div class="ann-hdr"><div><span class="badge urgent">Urgent</span><div class="ann-title">Pool Maintenance — March 20–22</div></div><span style="font-size:11.5px;color:var(--muted);flex-shrink:0;margin-left:12px;white-space:nowrap">Mar 15, 2026</span></div>
+          <div class="ann-body">The rooftop pool and jacuzzi will be closed March 20–22 for annual maintenance and safety inspections. All pre-existing bookings during this period have been cancelled and tenants notified by email.</div>
+          <div class="ann-foot">— Ashford Heights Management</div>
+        </div>
+
+        <div class="ann-card" style="border-left:3px solid var(--teal)">
+          <div class="ann-hdr"><div><span class="badge info">Info</span><div class="ann-title">New Package Notification System</div></div><span style="font-size:11.5px;color:var(--muted);flex-shrink:0;margin-left:12px;white-space:nowrap">Mar 8, 2026</span></div>
+          <div class="ann-body">We've upgraded our package management system. Tenants now receive an SMS and push notification the moment a package is scanned in at the lobby. Packages are held for 14 days before being returned.</div>
+          <div class="ann-foot">— Building Administration</div>
+        </div>
+
+        <div class="ann-card" style="border-left:3px solid var(--green)">
+          <div class="ann-hdr"><div><span class="badge closed">Community</span><div class="ann-title">Spring Resident Social — April 5</div></div><span style="font-size:11.5px;color:var(--muted);flex-shrink:0;margin-left:12px;white-space:nowrap">Mar 5, 2026</span></div>
+          <div class="ann-body">Join your neighbors for our Spring Social on April 5 from 5–8 PM in the Event Lounge (Level 3). Light refreshments provided. RSVP via the app or email management by March 29.</div>
+          <button class="btn-teal" style="margin-top:12px;font-size:11.5px;padding:6px 14px" onclick="toast('RSVP confirmed for April 5 — see you there')">RSVP</button>
+        </div>
+
+        <div class="ann-card">
+          <div class="ann-hdr"><div><span class="badge open">Reminder</span><div class="ann-title">Parking Garage — Updated Entry Code</div></div><span style="font-size:11.5px;color:var(--muted);flex-shrink:0;margin-left:12px;white-space:nowrap">Feb 28, 2026</span></div>
+          <div class="ann-body">The parking garage access code was updated on March 1. If you have not received your new code, please contact management at the front desk or submit a ticket through the portal.</div>
+          <div class="ann-foot">— Security Team</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ── MODALS ── -->
+
+<!-- Pay -->
+<div class="modal-bd" id="pay-modal">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">Pay Rent — April 2026</div><button class="modal-close" onclick="closeModal('pay-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:var(--teal-lt);border-radius:9px;padding:14px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center">
+        <div><div style="font-size:9.5px;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);font-weight:700;margin-bottom:3px">Amount Due</div><div style="font-family:var(--font-head);font-size:30px;font-weight:400;color:var(--navy)">$2,450.00</div></div>
+        <div style="text-align:right"><div style="font-size:11.5px;color:var(--muted)">Due Date</div><div style="font-size:13.5px;font-weight:600">April 1, 2026</div></div>
+      </div>
+      <div class="form-row"><label class="form-label">Payment Method</label><select class="form-select"><option>Visa ···· 4891 (Default)</option><option>Chase ACH ···· 2210</option></select></div>
+      <div class="form-row"><label class="form-label">Payment Date</label><input type="date" class="form-input" value="2026-04-01"/></div>
+      <div style="background:var(--bg);border-radius:7px;padding:11px;font-size:12px;color:var(--muted);line-height:1.6">Powered by <strong>Yardi Voyager</strong> — payment will post to your ledger within 1 business day. Confirmation sent to j.morgan@email.com.</div>
+    </div>
+    <div class="modal-ftr"><button class="btn-outline" onclick="closeModal('pay-modal')">Cancel</button><button class="btn-solid" onclick="processPayment()">Pay $2,450.00 via Yardi</button></div>
+  </div>
+</div>
+
+<!-- New Ticket -->
+<div class="modal-bd" id="ticket-modal">
+  <div class="modal" style="max-width:510px">
+    <div class="modal-hdr"><div class="modal-title">New Trouble Ticket</div><button class="modal-close" onclick="closeModal('ticket-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(192,75,16,0.08);color:#C04B10;padding:4px 11px;border-radius:99px;font-size:10.5px;font-weight:700;margin-bottom:16px">
+        <span class="sys-tag attntv" style="font-size:9px;padding:2px 6px">ATTNTV</span>
+        Ticket synced to ATTNTV on submission
+      </div>
+      <div class="form-grid">
+        <div class="form-row"><label class="form-label">Category</label>
+          <select class="form-select"><option>Plumbing</option><option>Electrical</option><option>HVAC / Heating</option><option>Windows / Doors</option><option>Appliances</option><option>Pest Control</option><option>Common Areas</option><option>Other</option></select>
+        </div>
+        <div class="form-row"><label class="form-label">Priority</label>
+          <select class="form-select"><option>Low</option><option selected>Medium</option><option>High</option><option>Emergency</option></select>
+        </div>
+      </div>
+      <div class="form-row"><label class="form-label">Issue Summary</label><input class="form-input" type="text" placeholder="Brief description of the problem"/></div>
+      <div class="form-row"><label class="form-label">Details</label><textarea class="form-textarea" placeholder="Describe the issue — when it started, frequency, any related problems..."></textarea></div>
+      <div class="form-row"><label class="form-label">Preferred Access Window</label>
+        <select class="form-select"><option>Any time (Mon–Fri 8 AM–5 PM)</option><option>Morning (8 AM–12 PM)</option><option>Afternoon (12–5 PM)</option><option>I need to be present</option><option>Emergency — immediate access OK</option></select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;background:var(--bg);border-radius:7px;font-size:12px;color:var(--muted)">
+        <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M10 2v10M5 7l5-5 5 5M4 15h12a1 1 0 001-1v-1H3v1a1 1 0 001 1z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+        Attach photos — helps maintenance diagnose faster
+        <button class="btn-outline" style="font-size:11px;padding:3px 9px;margin-left:auto" onclick="toast('File upload available in production build')">Attach</button>
+      </div>
+    </div>
+    <div class="modal-ftr"><button class="btn-outline" onclick="closeModal('ticket-modal')">Cancel</button><button class="btn-solid" onclick="submitTicket()">Submit to ATTNTV</button></div>
+  </div>
+</div>
+
+<!-- Ticket Detail -->
+<div class="modal-bd" id="ticket-detail-modal">
+  <div class="modal" style="max-width:490px">
+    <div class="modal-hdr"><div class="modal-title">Ticket #ATT-4492</div><button class="modal-close" onclick="closeModal('ticket-detail-modal')">✕</button></div>
+    <div class="modal-body">
+      <div style="display:flex;gap:7px;margin-bottom:14px"><span class="badge progress">In Progress</span><span class="badge open">Medium Priority</span></div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:5px">Leaky kitchen faucet — dripping constantly</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:16px">Kitchen sink faucet has been dripping continuously since March 9. Drip rate increasing. No visible water damage yet.</div>
+      <div style="background:var(--bg);border-radius:8px;padding:13px;margin-bottom:14px">
+        <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:9px">Ticket Details</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;font-size:12.5px">
+          <div><span style="color:var(--muted)">Submitted:</span> <strong>Mar 10, 2026</strong></div>
+          <div><span style="color:var(--muted)">Category:</span> <strong>Plumbing</strong></div>
+          <div><span style="color:var(--muted)">Assigned to:</span> <strong>Mike T.</strong></div>
+          <div><span style="color:var(--muted)">Est. Complete:</span> <strong>Mar 19</strong></div>
+        </div>
+      </div>
+      <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--muted);margin-bottom:9px">Timeline</div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--green)"></div><div><div class="feed-title">Assigned to Mike T. (Plumbing)</div><div class="feed-meta">Mar 11 · 9:14 AM</div></div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--teal)"></div><div><div class="feed-title">Parts ordered — cartridge replacement</div><div class="feed-meta">Mar 12 · 2:30 PM</div></div></div>
+      <div class="tl-item"><div class="tl-dot" style="background:var(--amber)"></div><div><div class="feed-title">Repair scheduled: Mar 19, 10–11 AM</div><div class="feed-meta">Mar 13 · 11:00 AM</div></div></div>
+    </div>
+    <div class="modal-ftr"><button class="btn-outline" onclick="closeModal('ticket-detail-modal')">Close</button><button class="btn-outline" onclick="toast('Message sent to maintenance')">Message Maintenance</button></div>
+  </div>
+</div>
+
+<!-- Building Switcher -->
+<div class="modal-bd" id="bld-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-hdr"><div class="modal-title">Switch Building</div><button class="modal-close" onclick="closeModal('bld-modal')">✕</button></div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Your account is linked to the following building(s):</p>
+      <div class="bld-list">
+        <div class="bld-opt active" onclick="switchBuilding(this,'Ashford Heights')">
+          <div class="bld-thumb" style="background:var(--teal-lt)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 22V9l9-7 9 7v13H3z" stroke="var(--teal)" stroke-width="1.5"/><path d="M9 22v-6h6v6" stroke="var(--teal)" stroke-width="1.5"/></svg></div>
+          <div class="bld-info"><strong>Ashford Heights</strong><span>200 W 57th St · Unit 4B</span></div>
+          <span class="connected-tag" style="flex-shrink:0"><span class="connected-dot"></span>Current</span>
+        </div>
+        <div class="bld-opt" onclick="switchBuilding(this,'Riverview Lofts')">
+          <div class="bld-thumb" style="background:var(--amber-lt)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 22V9l9-7 9 7v13H3z" stroke="var(--amber)" stroke-width="1.5"/><path d="M9 22v-6h6v6" stroke="var(--amber)" stroke-width="1.5"/></svg></div>
+          <div class="bld-info"><strong>Riverview Lofts</strong><span>840 River Dr · Unit 2A</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- My Bookings -->
+<div class="modal-bd" id="my-bookings-modal">
+  <div class="modal">
+    <div class="modal-hdr"><div class="modal-title">My Reservations</div><button class="modal-close" onclick="closeModal('my-bookings-modal')">✕</button></div>
+    <div class="modal-body">
+      <table style="width:100%;border-collapse:collapse">
+        <thead><tr style="border-bottom:1px solid var(--border)"><th style="text-align:left;padding:7px;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)">Amenity</th><th style="text-align:left;padding:7px;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)">Date &amp; Time</th><th style="text-align:left;padding:7px;font-size:10px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--muted)">Status</th><th></th></tr></thead>
+        <tbody>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:11px 7px;font-size:12.5px"><strong>Fitness Room</strong></td><td style="padding:11px 7px;font-size:12.5px">Mar 17 · 7–8 AM</td><td style="padding:11px 7px"><span class="badge confirmed">Confirmed</span></td><td style="padding:7px"><button class="btn-ghost" style="font-size:11px;padding:3px 7px;color:var(--red)" onclick="toast('Booking cancelled')">Cancel</button></td></tr>
+          <tr style="border-bottom:1px solid var(--border)"><td style="padding:11px 7px;font-size:12.5px"><strong>Fitness Room</strong></td><td style="padding:11px 7px;font-size:12.5px">Mar 19 · 7–8 AM</td><td style="padding:11px 7px"><span class="badge confirmed">Confirmed</span></td><td style="padding:7px"><button class="btn-ghost" style="font-size:11px;padding:3px 7px;color:var(--red)" onclick="toast('Booking cancelled')">Cancel</button></td></tr>
+          <tr><td style="padding:11px 7px;font-size:12.5px"><strong>Event Lounge</strong></td><td style="padding:11px 7px;font-size:12.5px">Mar 22 · 2–6 PM</td><td style="padding:11px 7px"><span class="badge pending">Pending</span></td><td style="padding:7px"><button class="btn-ghost" style="font-size:11px;padding:3px 7px;color:var(--red)" onclick="toast('Booking cancelled')">Cancel</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+  const PAGES = {dashboard:'Dashboard',booking:'Book Amenities',packages:'Mail & Packages',tickets:'Trouble Tickets',payments:'Rent & Payments',announcements:'Announcements'};
+
+  function doLogin() {
+    const s = document.getElementById('login-screen');
+    s.classList.add('hidden');
+    setTimeout(() => s.style.display = 'none', 460);
+    toast('Welcome back, Jordan Morgan');
+  }
+
+  function nav(id, el) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('panel-' + id).classList.add('active');
+    document.getElementById('page-title').textContent = PAGES[id];
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    if (el && el.classList) el.classList.add('active');
+  }
+
+  function openModal(id)  { document.getElementById(id).classList.add('open'); }
+  function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+  document.querySelectorAll('.modal-bd').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+  function toast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+  }
+
+  // Booking
+  let selAmenity = null, selSlot = null;
+  function selectAmenity(card, id) {
+    document.querySelectorAll('.amenity-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    selAmenity = id;
+    const form = document.getElementById('booking-form');
+    form.style.display = 'block';
+    document.getElementById('bf-title').textContent = card.querySelector('.am-name').textContent + ' — Select Date & Time';
+    form.scrollIntoView({ behavior:'smooth', block:'start' });
+    const d = new Date();
+    document.getElementById('book-date').value = d.toISOString().substring(0,10);
+  }
+  function loadSlots() { document.querySelectorAll('.slot:not(.taken)').forEach(s => s.classList.remove('selected')); selSlot = null; document.getElementById('book-sel').textContent = ''; }
+  function pickSlot(el) { document.querySelectorAll('.slot').forEach(s => s.classList.remove('selected')); el.classList.add('selected'); selSlot = el.textContent; document.getElementById('book-sel').textContent = 'Selected: ' + selSlot; }
+  function confirmBooking() {
+    if (!selAmenity) { toast('Select an amenity first'); return; }
+    if (!selSlot)    { toast('Select a time slot'); return; }
+    const date = document.getElementById('book-date').value || 'selected date';
+    toast('Reservation confirmed — ' + selSlot + ' on ' + date);
+    document.getElementById('booking-form').style.display = 'none';
+    document.querySelectorAll('.amenity-card').forEach(c => c.classList.remove('selected'));
+    selAmenity = null; selSlot = null;
+  }
+
+  function processPayment() { closeModal('pay-modal'); toast('Payment of $2,450 submitted to Yardi — confirmation emailed'); }
+  function submitTicket()   { closeModal('ticket-modal'); toast('Ticket submitted to ATTNTV — ref #ATT-4493'); }
+  function markPickup(btn)  { btn.closest('.pkg-card').style.opacity = '0.45'; btn.textContent = 'Picked Up'; btn.disabled = true; toast('Package marked as picked up'); }
+  function switchBuilding(el, name) { document.querySelectorAll('.bld-opt').forEach(o => o.classList.remove('active')); el.classList.add('active'); document.querySelector('.sb-pill').childNodes[1].textContent = ' ' + name; closeModal('bld-modal'); toast('Switched to ' + name); }
+</script>
+</body>
+</html>
